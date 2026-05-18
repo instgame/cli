@@ -7,6 +7,7 @@ import {
   loadGames,
   saveGames,
   searchGames,
+  pickRandomGames,
   PROJECT_ROOT,
   DATA_DIR,
   GAMES_FILE,
@@ -140,6 +141,39 @@ describe("cli binary", () => {
   it("version flag", () => {
     const output = execSync(`${CLI} --version`, { encoding: "utf-8" });
     expect(output.trim()).toBe("0.1.0");
+  });
+
+  it("random outputs play URLs", () => {
+    const output = execSync(`${CLI} random`, { encoding: "utf-8" });
+    const lines = output.trim().split("\n");
+    expect(lines).toHaveLength(3);
+    for (const line of lines) {
+      expect(line).toContain("https://free.instgame.com/game/");
+    }
+  });
+
+  it("random -n returns specified count", () => {
+    const output = execSync(`${CLI} random -n 5`, { encoding: "utf-8" });
+    const lines = output.trim().split("\n");
+    expect(lines).toHaveLength(5);
+  });
+
+  it("random -j outputs JSON array of URLs", () => {
+    const output = execSync(`${CLI} random -j`, { encoding: "utf-8" });
+    const parsed = JSON.parse(output);
+    expect(Array.isArray(parsed)).toBe(true);
+    expect(parsed).toHaveLength(3);
+    for (const url of parsed) {
+      expect(url).toMatch(/^https:\/\/free\.instgame\.com\/game\//);
+    }
+  });
+
+  it("random -c filters by category", () => {
+    const output = execSync(`${CLI} random -c "Sports" -n 10 -j`, {
+      encoding: "utf-8",
+    });
+    const parsed = JSON.parse(output);
+    expect(parsed.length).toBeGreaterThan(0);
   });
 });
 
@@ -324,6 +358,41 @@ describe("getTags", () => {
   it("handles games without tags", () => {
     const games = [{ id: "1", slug: "1", name: "A" }];
     expect(getTags(games)).toHaveLength(0);
+  });
+});
+
+// --- pickRandomGames ---
+
+describe("pickRandomGames", () => {
+  it("returns 1 game by default", () => {
+    const result = pickRandomGames(sampleGames);
+    expect(result).toHaveLength(1);
+  });
+
+  it("returns exactly n games", () => {
+    const result = pickRandomGames(sampleGames, 2);
+    expect(result).toHaveLength(2);
+  });
+
+  it("returns games from the input array", () => {
+    const result = pickRandomGames(sampleGames, 2);
+    for (const game of result) {
+      expect(sampleGames).toContain(game);
+    }
+  });
+
+  it("caps at array length", () => {
+    const result = pickRandomGames(sampleGames, 100);
+    expect(result).toHaveLength(4);
+  });
+
+  it("returns different results across multiple calls", () => {
+    const allResults = new Set();
+    for (let i = 0; i < 50; i++) {
+      const result = pickRandomGames(sampleGames, 2);
+      allResults.add(result.map((g) => g.slug).sort().join(","));
+    }
+    expect(allResults.size).toBeGreaterThanOrEqual(3);
   });
 });
 

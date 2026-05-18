@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { loadGames, saveGames, fetchGames, filterGames, findGame, getCategories, getTags } from "../src/index.js";
+import { loadGames, saveGames, fetchGames, filterGames, findGame, searchGames, getCategories, getTags, pickRandomGames } from "../src/index.js";
 
 function formatTable(rows, columns) {
   const widths = columns.map((col) =>
@@ -130,6 +130,42 @@ program
     console.log(``);
     console.log(`Created:  ${game.createdAt}`);
     console.log(`Updated:  ${game.updatedAt}`);
+  });
+
+program
+  .command("random")
+  .alias("rand")
+  .description("Return random game play URLs")
+  .option("-n, --count <number>", "Number of games to return", "3")
+  .option("-c, --category <name>", "Limit to a specific category")
+  .option("-t, --tag <name>", "Limit to a specific tag")
+  .option("-j, --json", "Output as JSON")
+  .action((opts) => {
+    let games = loadGames();
+
+    if (opts.category) {
+      games = games.filter(
+        (g) => (g.categoryName || "").toLowerCase().includes(opts.category.toLowerCase())
+      );
+    }
+    if (opts.tag) {
+      games = games.filter(
+        (g) =>
+          (g.tagNames || []).some((t) => t.toLowerCase().includes(opts.tag.toLowerCase())) ||
+          (g.tags || []).some((t) => t.toLowerCase().includes(opts.tag.toLowerCase()))
+      );
+    }
+
+    const picked = pickRandomGames(games, parseInt(opts.count, 10));
+
+    if (opts.json) {
+      console.log(JSON.stringify(picked.map((g) => g.playUrl), null, 2));
+      return;
+    }
+
+    for (const g of picked) {
+      console.log(`${g.name}  ${g.playUrl}`);
+    }
   });
 
 program

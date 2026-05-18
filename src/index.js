@@ -77,6 +77,11 @@ export function findGame(games, slug) {
   return games.find((g) => g.slug === slug || g.id === slug);
 }
 
+export function pickRandomGames(games, count = 1) {
+  const shuffled = [...games].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, games.length));
+}
+
 export function getCategories(games) {
   const cats = {};
   for (const g of games) {
