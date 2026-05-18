@@ -1,8 +1,12 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { createRequire } from "module";
 import { createServer } from "http";
 import { loadGames, saveGames, fetchGames, filterGames, findGame, searchGames, getCategories, getTags, pickRandomGames, pickGamesByCategory } from "../src/index.js";
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json");
 
 function formatTable(rows, columns) {
   const widths = columns.map((col) =>
@@ -29,7 +33,7 @@ const program = new Command();
 program
   .name("instgame")
   .description("Browse and manage instgame.com game catalog")
-  .version("0.1.0");
+  .version(version);
 
 program
   .command("list")
@@ -218,7 +222,7 @@ program
         res.end(JSON.stringify(tags));
       } else if (path === "/api/health") {
         res.writeHead(200, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ status: "ok", games: games.length, version: "0.1.0" }));
+        res.end(JSON.stringify({ status: "ok", games: games.length, version }));
       } else {
         res.writeHead(404, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Not found", paths: ["/api/games", "/api/latest", "/api/categories", "/api/tags", "/api/health"] }));

@@ -15,6 +15,11 @@ import {
 import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
+import { execSync } from "child_process";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json");
 
 // --- Fixtures ---
 
@@ -47,8 +52,6 @@ const sampleGames = [
     tagNames: ["Puzzle"],
   },
 ];
-
-import { execSync } from "child_process";
 
 const CLI = "node bin/cli.js";
 
@@ -140,7 +143,7 @@ describe("cli binary", () => {
 
   it("version flag", () => {
     const output = execSync(`${CLI} --version`, { encoding: "utf-8" });
-    expect(output.trim()).toBe("0.1.0");
+    expect(output.trim()).toBe(version);
   });
 
   it("random outputs play URLs", () => {
