@@ -16,9 +16,15 @@
     "type": "git",
     "url": "git@github.com:instgame/cli.git"
   },
-  "keywords": ["instgame", "h5", "games", "cli"],
+  "keywords": [
+    "instgame",
+    "h5",
+    "games",
+    "cli"
+  ],
   "license": "MIT",
   "dependencies": {
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "fuse.js": "^7.3.0"
   }
 }

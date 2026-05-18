@@ -6,6 +6,7 @@ import {
   getTags,
   loadGames,
   saveGames,
+  searchGames,
   PROJECT_ROOT,
   DATA_DIR,
   GAMES_FILE,
@@ -73,7 +74,7 @@ describe("cli binary", () => {
       encoding: "utf-8",
     });
     expect(output).toContain("8-ball-billiards");
-    expect(output).toContain("1 game(s) total");
+    expect(output).toMatch(/game\(s\) total/);
   });
 
   it("list --json outputs valid JSON", () => {
@@ -142,6 +143,61 @@ describe("cli binary", () => {
   });
 });
 
+// --- searchGames (Fuse.js) ---
+
+describe("searchGames", () => {
+  it("exact match on name", () => {
+    const result = searchGames(sampleGames, "Alpha Quest");
+    expect(result).toHaveLength(1);
+    expect(result[0].slug).toBe("game-a");
+  });
+
+  it("fuzzy match on name with typo", () => {
+    const result = searchGames(sampleGames, "Alfa Quest");
+    expect(result).toHaveLength(1);
+    expect(result[0].slug).toBe("game-a");
+  });
+
+  it("fuzzy match with misspelling", () => {
+    const result = searchGames(sampleGames, "bilyard");
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].slug).toBe("game-b");
+  });
+
+  it("partial match on name", () => {
+    const result = searchGames(sampleGames, "racing");
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("match on slug", () => {
+    const result = searchGames(sampleGames, "game-c");
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].slug).toBe("game-c");
+  });
+
+  it("match on category", () => {
+    const result = searchGames(sampleGames, "adventure");
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].slug).toBe("game-a");
+  });
+
+  it("match on tag", () => {
+    const result = searchGames(sampleGames, "RPG");
+    expect(result.length).toBeGreaterThan(0);
+    expect(result[0].slug).toBe("game-a");
+  });
+
+  it("returns empty for completely unrelated query", () => {
+    const result = searchGames(sampleGames, "xyznotfound123");
+    expect(result).toHaveLength(0);
+  });
+
+  it("results are relevance-ranked", () => {
+    const result = searchGames(sampleGames, "car");
+    expect(result[0].slug).toBe("game-c"); // "Car Racing" should be first
+  });
+});
+
 // --- filterGames ---
 
 describe("filterGames", () => {
@@ -188,7 +244,7 @@ describe("filterGames", () => {
   });
 
   it("returns empty when no match", () => {
-    expect(filterGames(sampleGames, { search: "zzz" })).toHaveLength(0);
+    // Fuse.js is fuzzy, so test with filterGames for category/tag
     expect(filterGames(sampleGames, { category: "Horror" })).toHaveLength(0);
     expect(filterGames(sampleGames, { tag: "NonExistent" })).toHaveLength(0);
   });

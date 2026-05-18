@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import Fuse from "fuse.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const PROJECT_ROOT = join(__dirname, "..");
@@ -30,12 +31,29 @@ export async function fetchGames() {
   return res.json();
 }
 
+const FUSE_OPTIONS = {
+  keys: [
+    { name: "name", weight: 0.5 },
+    { name: "slug", weight: 0.2 },
+    { name: "categoryName", weight: 0.15 },
+    { name: "tagNames", weight: 0.15 },
+  ],
+  threshold: 0.4,
+  includeScore: true,
+  ignoreLocation: true,
+};
+
+export function searchGames(games, query) {
+  const fuse = new Fuse(games, FUSE_OPTIONS);
+  const results = fuse.search(query);
+  return results.map((r) => r.item);
+}
+
 export function filterGames(games, { search, category, tag } = {}) {
   let result = [...games];
 
   if (search) {
-    const q = search.toLowerCase();
-    result = result.filter((g) => g.name.toLowerCase().includes(q));
+    result = searchGames(result, search);
   }
   if (category) {
     const q = category.toLowerCase();
