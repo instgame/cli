@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { loadGames, saveGames, fetchGames, filterGames, findGame, searchGames, getCategories, getTags, pickRandomGames } from "../src/index.js";
+import { createServer } from "http";
+import { loadGames, saveGames, fetchGames, filterGames, findGame, searchGames, getCategories, getTags, pickRandomGames, pickGamesByCategory } from "../src/index.js";
 
 function formatTable(rows, columns) {
   const widths = columns.map((col) =>
@@ -166,6 +167,82 @@ program
     for (const g of picked) {
       console.log(`${g.name}  ${g.playUrl}`);
     }
+  });
+
+program
+  .command("serve")
+  .alias("mock")
+  .description("Start mock API server for H5 site integration")
+  .option("-p, --port <number>", "Port to listen on", "3000")
+  .option("-h, --host <address>", "Host to bind to", "127.0.0.1")
+  .action((opts) => {
+    const port = parseInt(opts.port, 10);
+    const games = loadGames();
+
+    const server = createServer((req, res) => {
+      const url = new URL(req.url, `http://${opts.host}:${port}`);
+      const path = url.pathname;
+
+      if (path === "/api/games") {
+        const count = parseInt(url.searchParams.get("count") || "10", 10);
+        const category = url.searchParams.get("category");
+        const tag = url.searchParams.get("tag");
+        const search = url.searchParams.get("search");
+
+        let result;
+        if (category || tag || search) {
+          result = filterGames(games, { category, tag, search });
+          result = pickRandomGames(result, count);
+        } else {
+          result = pickGamesByCategory(games, count);
+        }
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      } else if (path === "/api/latest") {
+        const count = parseInt(url.searchParams.get("count") || "10", 10);
+        const sortBy = url.searchParams.get("sort") === "created" ? "createdAt" : "updatedAt";
+        const result = [...games]
+          .sort((a, b) => new Date(b[sortBy]) - new Date(a[sortBy]))
+          .slice(0, count);
+
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(result));
+      } else if (path === "/api/categories") {
+        const cats = getCategories(games);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(cats));
+      } else if (path === "/api/tags") {
+        const tags = getTags(games);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(tags));
+      } else if (path === "/api/health") {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "ok", games: games.length, version: "0.1.0" }));
+      } else {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Not found", paths: ["/api/games", "/api/latest", "/api/categories", "/api/tags", "/api/health"] }));
+      }
+    });
+
+    server.listen(port, opts.host, () => {
+      console.log(`Mock API server running at http://${opts.host}:${port}`);
+      console.log("");
+      console.log("Endpoints:");
+      console.log(`  GET /api/games              - Random games distributed across categories`);
+      console.log(`  GET /api/games?count=5      - Pick 5 games`);
+      console.log(`  GET /api/games?category=Sports  - Random from category`);
+      console.log(`  GET /api/games?tag=Pool     - Random from tag`);
+      console.log(`  GET /api/games?search=billiard  - Fuzzy search`);
+      console.log(`  GET /api/latest             - Latest updated games (default 10)`);
+      console.log(`  GET /api/latest?count=5     - Latest 5 games`);
+      console.log(`  GET /api/latest?sort=created - Sorted by creation time`);
+      console.log(`  GET /api/categories         - All categories`);
+      console.log(`  GET /api/tags               - All tags`);
+      console.log(`  GET /api/health             - Server health`);
+      console.log("");
+      console.log("Press Ctrl+C to stop");
+    });
   });
 
 program

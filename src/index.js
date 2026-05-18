@@ -82,6 +82,26 @@ export function pickRandomGames(games, count = 1) {
   return shuffled.slice(0, Math.min(count, games.length));
 }
 
+export function pickGamesByCategory(games, count = 10) {
+  const cats = {};
+  for (const g of games) {
+    const name = g.categoryName || "(uncategorized)";
+    if (!cats[name]) cats[name] = [];
+    cats[name].push(g);
+  }
+
+  const catNames = Object.keys(cats).sort(() => Math.random() - 0.5);
+  const perCat = Math.ceil(count / catNames.length);
+  const picked = [];
+  for (const cat of catNames) {
+    const catGames = cats[cat];
+    const toPick = Math.min(perCat, catGames.length);
+    picked.push(...pickRandomGames(catGames, toPick));
+    if (picked.length >= count) break;
+  }
+  return picked.slice(0, count);
+}
+
 export function getCategories(games) {
   const cats = {};
   for (const g of games) {
