@@ -1,6 +1,9 @@
 # instgame-cli
 
-CLI tool for browsing the [instgame.com](https://instgame.com) H5 game catalog. Useful for integrating game listings into other sites.
+CLI tool for discovering and integrating [instgame.com](https://instgame.com) H5 games.
+
+**For H5 game players** — quickly search and find games to play.
+**For H5 game site developers** — spin up a mock API server to integrate games into your site.
 
 ## Install
 
@@ -14,60 +17,49 @@ Or run directly:
 node bin/cli.js <command>
 ```
 
-## Commands
+---
 
-### `list` — Browse games
+## For Players
+
+### Search games
 
 ```bash
-instgame list                     # all games
-instgame list -s "billiard"       # fuzzy search by name (Fuse.js)
+instgame list                     # browse all 535+ games
+instgame list -s "billiard"       # fuzzy search (typos tolerated)
 instgame list -c "Sports"         # filter by category
 instgame list -t "Pool"           # filter by tag
-instgame list -j                  # JSON output
 ```
 
-### `show` — Game details
+### View game details
 
 ```bash
 instgame show 8-ball-billiards-classic
-instgame show 8-ball-billiards-classic -j   # JSON output
 ```
 
-### `random` — Random game play URLs
+Output includes play URL, icon, banner, category, and tags — click the play URL to start playing.
+
+### Random picks
 
 ```bash
-instgame random                   # 3 random play URLs
-instgame random -n 10             # 10 random play URLs
-instgame random -c "Sports"       # random from specific category
-instgame random -t "Pool"         # random from specific tag
-instgame random -j                # JSON array of URLs
+instgame random                   # 3 random games
+instgame random -n 10             # 10 random games
+instgame random -c "Sports"       # random picks from a category
 ```
 
-### `categories` / `tags` — Browse taxonomy
+---
+
+## For Developers
+
+### Mock API server
 
 ```bash
-instgame categories
-instgame tags
-```
-
-### `sync` — Update data
-
-```bash
-instgame sync   # download latest catalog from free.instgame.com
-```
-
-### `serve` — Mock API server
-
-Starts a local HTTP server with JSON API for H5 site integration:
-
-```bash
-instgame serve                    # 127.0.0.1:3000
+instgame serve                    # starts at 127.0.0.1:3000
 instgame serve -p 8080            # custom port
 ```
 
 #### API Endpoints
 
-| Method | Description | Example |
+| Endpoint | Description | Example |
 |---|---|---|
 | `GET /api/games` | Random games, distributed across categories | `?count=5` |
 | `GET /api/games` | Filtered random games | `?category=Sports&count=5` |
@@ -78,23 +70,44 @@ instgame serve -p 8080            # custom port
 | `GET /api/tags` | Tag list with counts | |
 | `GET /api/health` | Server health check | |
 
-#### Example integration
+#### Quick integration
 
 ```js
-// Fetch 5 random games for a recommendation widget
+// 1. Fetch 5 random games for a recommendation widget
 const res = await fetch('http://127.0.0.1:3000/api/games?count=5');
 const games = await res.json();
 games.forEach(g => {
-  console.log(`${g.name}: ${g.playUrl}`);
+  console.log(`<iframe src="${g.playUrl}"></iframe>`);
 });
 
-// Fetch latest 3 new games
+// 2. Fetch 3 latest new games
 const latest = await fetch('http://127.0.0.1:3000/api/latest?count=3');
+
+// 3. Get category list for navigation
+const cats = await fetch('http://127.0.0.1:3000/api/categories');
+```
+
+#### JSON output (no server)
+
+```bash
+instgame random -j                # JSON array of play URLs
+instgame list -j                  # full game data as JSON
+instgame show <slug> -j           # single game as JSON
+```
+
+---
+
+## Other Commands
+
+```bash
+instgame categories               # list all categories
+instgame tags                     # list all tags
+instgame sync                     # update game data from remote
 ```
 
 ## Data
 
-Game data is stored in `data/games.json`. Run `instgame sync` to update from the remote source.
+Game data is stored in `data/games.json`. Run `instgame sync` to update.
 
 ## Test
 

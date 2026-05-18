@@ -1,7 +1,7 @@
 {
   "name": "instgame-cli",
   "version": "0.1.0",
-  "description": "CLI tool for browsing and managing instgame.com game catalog",
+  "description": "CLI tool and mock API server for discovering and integrating instgame.com H5 games",
   "type": "module",
   "bin": {
     "instgame": "./bin/cli.js"
