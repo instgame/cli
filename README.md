@@ -8,13 +8,27 @@ CLI tool for discovering and integrating [instgame.com](https://instgame.com) H5
 ## Install
 
 ```bash
+npm install -g @instgame/cli
+```
+
+Or run directly from source:
+
+```bash
+git clone git@github.com:instgame/cli.git
+cd cli
 npm install -g .
 ```
 
-Or run directly:
+Or use npx without installing:
 
 ```bash
-node bin/cli.js <command>
+npx @instgame/cli <command>
+```
+
+## Update
+
+```bash
+npm update -g @instgame/cli
 ```
 
 ---

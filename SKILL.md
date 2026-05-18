@@ -18,6 +18,8 @@ metadata:
 
 Browse, search, and integrate [instgame.com](https://instgame.com) H5 games (535+ games).
 
+Install: `npm install -g @instgame/cli` or use `npx @instgame/cli <command>`.
+
 Run all commands from project root: `/Users/zhangzhibin/Documents/mygit/cloudcr/instgame-cli`
 
 ```
